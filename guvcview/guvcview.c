@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
 	if(options_parse(argc, argv))
 		return 0;
 	
+    setvbuf(stdout, NULL, _IONBF, 0);
 	printf("GUVCVIEW: version %s\n", VERSION);
 
 	/*get command line options*/
