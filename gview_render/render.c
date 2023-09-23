@@ -541,3 +541,32 @@ int render_call_event_callback(int id)
 
 	return ret;
 }
+
+int render_get_mouse_pos(int *x, int *y)
+{
+    int ret = 1;
+
+    switch(render_api)
+    {
+        case RENDER_NONE:
+            break;
+
+        #if ENABLE_SFML
+        case RENDER_SFML:
+            break;
+        #endif
+
+        #if ENABLE_SDL2
+        case RENDER_SDL:
+            get_render_sdl2_mouse_pos(x, y);
+            ret = 0;
+            break;
+        #endif
+
+        default:
+            break;
+
+    }
+
+    return ret;
+}

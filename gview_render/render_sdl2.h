@@ -91,3 +91,8 @@ void render_sdl2_dispatch_events();
  * returns: none
  */
 void render_sdl2_clean();
+
+/*
+ * get mouse position
+ */
+void get_render_sdl2_mouse_pos(int *x, int *y);

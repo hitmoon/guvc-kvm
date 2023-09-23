@@ -323,6 +323,11 @@ void render_clean_fx();
  */
 void render_close();
 
+/*
+ * get mouse relative postion
+ */
+int render_get_mouse_pos(int *x, int *y);
+
 __END_DECLS
 
 #endif

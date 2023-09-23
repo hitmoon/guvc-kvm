@@ -46,6 +46,8 @@
 #include "gui.h"
 #include "../config.h"
 
+#define WIN_TITLE_SIZE 128
+
 /*flags*/
 extern int debug_level;
 
@@ -64,7 +66,7 @@ static uint64_t my_video_begin_time = 0; /*first video frame ts*/
 
 static int restart = 0; /*restart flag*/
 
-static char render_caption[30]; /*render window caption*/
+static char render_caption[WIN_TITLE_SIZE]; /*render window caption*/
 
 static uint32_t my_render_mask = REND_FX_YUV_NOFILT; /*render fx filter mask*/
 
@@ -1138,6 +1140,8 @@ void *capture_loop(void *data)
 		frame = v4l2core_get_decoded_frame(my_vd);
 		if( frame != NULL)
 		{
+            int x, y;
+
 			/*run software autofocus (must be called after frame was grabbed and decoded)*/
 			if(do_soft_autofocus || do_soft_focus)
 				do_soft_focus = v4l2core_soft_autofocus_run(my_vd, frame);
@@ -1278,10 +1282,15 @@ void *capture_loop(void *data)
 			 * (we don't want to record the osd effects)
 			 */
 			render_frame_osd(frame->yuv_frame);
-
+            if (render_get_mouse_pos(&x, &y)) {
+                printf("get mouse relative position error, reset to -1, -1\n");
+                x = -1;
+                y = -1;
+            }
 			/* finally render the frame */
-			snprintf(render_caption, 29, "Guvcview  (%2.2f fps)",
-				v4l2core_get_realfps(my_vd));
+			snprintf(render_caption, WIN_TITLE_SIZE, "Guvcview  (%2.2f fps) [ x: %d, y: %d ]",
+				v4l2core_get_realfps(my_vd), x, y);
+
 			render_set_caption(render_caption);
 			render_frame(frame->yuv_frame);
 

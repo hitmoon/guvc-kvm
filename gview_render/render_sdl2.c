@@ -422,3 +422,8 @@ void render_sdl2_clean()
 
 	SDL_Quit();
 }
+
+void get_render_sdl2_mouse_pos(int *x, int *y)
+{
+    SDL_GetMouseState(x, y);
+}
