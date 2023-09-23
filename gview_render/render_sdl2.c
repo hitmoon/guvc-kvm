@@ -335,33 +335,36 @@ void render_sdl2_dispatch_events()
 
 	while( SDL_PollEvent(&event) )
 	{
-		if(event.type==SDL_KEYDOWN)
+		if (event.type == SDL_KEYDOWN)
 		{
-
-            printf("key: %s pressed\n",
-                    SDL_GetKeyName(event.key.keysym.sym));
-					//switch( event.key.keysym.scancode )
-			//{
-			//	case 220:
-			//		break;
-			//	default:
-			//		break;
-			//}
+            printf("key: %s pressed, mod: %d\n",
+                    SDL_GetKeyName(event.key.keysym.sym), event.key.keysym.mod);
 		}
 
-        if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN
-            || event.type == SDL_MOUSEBUTTONUP)
+        if (event.type == SDL_KEYUP)
         {
-            int x, y;
-            SDL_GetMouseState(&x, &y);
+            printf("key: %s released\n",
+                    SDL_GetKeyName(event.key.keysym.sym));
+        }
 
-            if (event.type == SDL_MOUSEBUTTONDOWN) {
-                printf("mouse down: [%d, %d]\n", x, y);
-            }
+        if (event.type == SDL_MOUSEMOTION)
+        {
+            printf("mouse move: [%d, %d]\n", event.motion.x, event.motion.y);
+        }
 
-            if (event.type == SDL_MOUSEBUTTONUP) {
-                printf("mouse up: [%d, %d]\n", x, y);
-            }
+        if (event.type == SDL_MOUSEBUTTONDOWN)
+        {
+            printf("mouse %d down: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
+        }
+
+        if (event.type == SDL_MOUSEBUTTONUP)
+        {
+            printf("mouse %d up: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
+        }
+
+        if (event.type == SDL_MOUSEWHEEL)
+        {
+            printf("mouse wheel: [%d, %d]\n", event.wheel.x, event.wheel.y);
         }
 
 		if(event.type==SDL_QUIT)
