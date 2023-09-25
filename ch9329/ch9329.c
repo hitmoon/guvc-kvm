@@ -244,12 +244,12 @@ static int send_key_mod(char *key, enum CTRL_KEY mod, int pressed, int fd)
     int ret;
 
     gen_cmd_send_kb(key, mod, pressed, &PKT(SEND_KB_GENERAL_DATA));
-    printf("send %s %s\n", key, pressed ? "pressed" : "released");
-    print_pkt(SEND_KB_GENERAL_DATA);
+    //printf("send %s %s\n", key, pressed ? "pressed" : "released");
+    //print_pkt(SEND_KB_GENERAL_DATA);
     serial_write_and_wait_reply(fd, &PKT(SEND_KB_GENERAL_DATA), sizeof PKT(SEND_KB_GENERAL_DATA),
         &PKTR(SEND_KB_GENERAL_DATA), sizeof PKTR(SEND_KB_GENERAL_DATA));
 
-    printf("reply data: 0x%02x\n", PKTR(SEND_KB_GENERAL_DATA).data[0]);
+    //printf("reply data: 0x%02x\n", PKTR(SEND_KB_GENERAL_DATA).data[0]);
     return 0;
 }
 
