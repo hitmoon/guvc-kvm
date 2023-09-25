@@ -5,7 +5,104 @@ struct key_map {
     unsigned char code;
 };
 
+#define PROTO_HEAD 0xAB57
+
+#define CMD_GET_INFO 0x01
+#define CMD_SEND_KB_GENERAL_DATA 0x02
+#define CMD_SEND_KB_MEDIA_DATA 0x03
+#define CMD_SEND_MS_ABS_DATA 0x04
+#define CMD_SEND_MS_REL_DATA 0x05
+#define CMD_SEND_MY_HID_DATA 0x06
+#define CMD_READ_MY_HID_DATA 0x07
+#define CMD_GET_PARA_CFG 0x08
+#define CMD_SET_PARA_CFG 0x09
+#define CMD_GET_USB_STRING 0x0A
+#define CMD_SET_USB_STRING 0x0B
+#define CMD_SET_DEFAULT_CFG 0x0C
+#define CMD_RESET 0x0F
+
+/* cmd data length */
+#define GET_INFO_LEN 0x00
+#define REPLY_GET_INFO_LEN 0x08
+
+#define SEND_KB_GENERAL_DATA_LEN 0x08
+#define REPLY_SEND_KB_GENERAL_DATA_LEN 0x01
+
+#define SEND_KB_MEDIA_DATA_LEN 0x02
+#define REPLY_SEND_KB_MEDIA_DATA_LEN 0x01
+
+#define SEND_MS_ABS_DATA_LEN 0x07
+#define REPLY_SEND_MS_ABS_DATA_LEN 0x01
+
+#define SEND_MS_REL_DATA_LEN 0x05
+#define REPLY_SEND_MS_REL_DATA_LEN 0x01
+
+#define SEND_MY_HID_DATA_LEN(n) n
+#define REPLY_SEND_MY_HID_DATA_LEN 0x01
+
+// TODO
+#define READ_MY_HID_DATA_LEN(n) n
+#define REPLY_READ_MY_HID_DATA_LEN 0x01
+
+#define GET_PARA_CFG_LEN 0x00
+#define REPLY_GET_PARA_CFG_LEN 0x32
+
+#define SET_PARA_CFG_LEN 0x32
+#define REPLY_SET_PARA_CFG_LEN 0x01
+
+#define GET_USB_STRING_LEN 0x01
+#define REPLY_GET_USB_STRING (0x02 + 0x23)
+
+#define SET_USB_STRING_LEN(n) (0x02 + n)
+#define REPLY_SET_USB_STRING_LEN 0x01
+
+#define SET_DEFAULT_CFG_LEN 0x00
+#define REPLY_SET_DEFAULT_CFG_LEN 0x01
+
+#define RESET_LEN 0x00
+#define REPLY_RESET_LEN 0x01
+
+#define CMD_LEN(C) C##_LEN
+#define CMD_REPLY_LEN(C) REPLY_##C##_LEN
+
+#define TYPE_CMD(C) \
+struct cmd_##C { \
+    unsigned short head; \
+    unsigned char addr; \
+    unsigned char cmd; \
+    unsigned char len; \
+    unsigned char data[CMD_LEN(C)]; \
+    unsigned char sum; \
+};
+
+#define TYPE_CMD_REPLY(C) \
+struct cmd_reply_##C { \
+    unsigned short head; \
+    unsigned char addr; \
+    unsigned char cmd; \
+    unsigned char len; \
+    unsigned char data[CMD_REPLY_LEN(C)]; \
+    unsigned char sum; \
+};
+
+#define PKT(C) cmd_##C##_pkt
+#define PKTP(C) cmd_##C##_pkt_ptr
+#define PKTR(C) cmd_##C##_reply_pkt
+#define DECLARE_CMD(C) struct cmd_##C PKT(C)
+#define DECLARE_CMD_PTR(C) struct cmd_##C * PKTP(C)
+#define DECLARE_CMD_REPLY(C) struct cmd_reply_##C PKTR(C)
+
 #pragma pack(1)
+TYPE_CMD(GET_INFO);
+TYPE_CMD(RESET);
+TYPE_CMD(SEND_KB_GENERAL_DATA);
+TYPE_CMD(SEND_MS_REL_DATA);
+
+TYPE_CMD_REPLY(GET_INFO);
+TYPE_CMD_REPLY(RESET);
+TYPE_CMD_REPLY(SEND_KB_GENERAL_DATA);
+TYPE_CMD_REPLY(SEND_MS_REL_DATA);
+
 struct cmd_send_kb {
     unsigned short head;
     unsigned char addr;
@@ -41,8 +138,8 @@ struct cmd_get_info_reply {
     unsigned char data[8];
     unsigned char sum;
 };
-
 #pragma pack()
+
 
 enum CTRL_KEY {
     CTRL_KEY_NONE = 0,

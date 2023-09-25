@@ -10,6 +10,8 @@
 
 #define PORT "/dev/ttyUSB0"
 
+#define print_pkt(C) print_cmd((unsigned char *)&PKT(C), CMD_LEN(C))
+
 static struct key_map ch9329_maps[] = {
     { "Escape", 0x29 },
     { "F1", 0x3A },
@@ -164,47 +166,49 @@ void print_kv(gpointer key, gpointer value, gpointer user_data)
     printf("%s ==> 0x%02x\n", (char*)key, (unsigned char)value);
 }
 
-static void print_send_kb_pkt(struct cmd_send_kb *pkt)
+static void print_cmd(unsigned char *pkt, int len)
 {
     int i;
-    unsigned char *p = (unsigned char*)pkt;
+    unsigned char *p = pkt;
 
-    for (i = 0; i < sizeof *pkt; i++) {
+    for (i = 0; i < len; i++) {
         printf("0x%02X ", *p++);
     }
     printf("\n");
 }
 
-static void gen_cmd_send_kb(char *key, enum CTRL_KEY mod, int pressed, struct cmd_send_kb *pkt)
+static void gen_cmd_send_kb(char *key, enum CTRL_KEY mod, int pressed, void *pkt)
 {
     unsigned long cksum = 0;
     int i;
     unsigned char *p = (unsigned char*)pkt;
+    DECLARE_CMD_PTR(SEND_KB_GENERAL_DATA);
 
-    pkt->head = 0xAB57;
-    pkt->addr = 0x0;
-    pkt->cmd = 0x02;
-    pkt->len = 0x8;
-    pkt->data[0] = mod;
-    pkt->data[1] = 0x0;
-    pkt->data[2] = 0x0;
+    PKTP(SEND_KB_GENERAL_DATA) = pkt;
+    PKTP(SEND_KB_GENERAL_DATA)->head = PROTO_HEAD;
+    PKTP(SEND_KB_GENERAL_DATA)->addr = 0x0;
+    PKTP(SEND_KB_GENERAL_DATA)->cmd = CMD_SEND_KB_GENERAL_DATA;
+    PKTP(SEND_KB_GENERAL_DATA)->len = SEND_KB_GENERAL_DATA_LEN;
+    PKTP(SEND_KB_GENERAL_DATA)->data[0] = mod;
+    PKTP(SEND_KB_GENERAL_DATA)->data[1] = 0x0;
+    PKTP(SEND_KB_GENERAL_DATA)->data[2] = 0x0;
 
     if (pressed) {
         unsigned char code = lookup_key_code(key);
-        pkt->data[2] = code;
+        PKTP(SEND_KB_GENERAL_DATA)->data[2] = code;
     }
 
     /* only support one key now */
     for (i = 3; i < 8; i++) {
-        pkt->data[i] = 0x0;
+        PKTP(SEND_KB_GENERAL_DATA)->data[i] = 0x0;
     }
 
-    for (i = 0; i < 13; i++) {
+    for (i = 0; i < 5 + SEND_KB_GENERAL_DATA_LEN; i++) {
         cksum += *p;
         p++;
     }
 
-    pkt->sum = cksum & 0xff;
+    PKTP(SEND_KB_GENERAL_DATA)->sum = cksum & 0xff;
 }
 
 ssize_t serial_write(int fd, char *buf, size_t size)
@@ -235,16 +239,17 @@ ssize_t serial_read(int fd, char *buf, size_t size)
 
 static int send_key_mod(char *key, enum CTRL_KEY mod, int pressed, int fd)
 {
-    struct cmd_send_kb pkt;
+    DECLARE_CMD(SEND_KB_GENERAL_DATA);
+    DECLARE_CMD_REPLY(SEND_KB_GENERAL_DATA);
     int ret;
-    struct cmd_general_reply r;
 
-    gen_cmd_send_kb(key, mod, pressed, &pkt);
+    gen_cmd_send_kb(key, mod, pressed, &PKT(SEND_KB_GENERAL_DATA));
     printf("send %s %s\n", key, pressed ? "pressed" : "released");
-    print_send_kb_pkt(&pkt);
-    serial_write_and_wait_reply(fd, &pkt, sizeof pkt, &r, sizeof r);
+    print_pkt(SEND_KB_GENERAL_DATA);
+    serial_write_and_wait_reply(fd, &PKT(SEND_KB_GENERAL_DATA), sizeof PKT(SEND_KB_GENERAL_DATA),
+        &PKTR(SEND_KB_GENERAL_DATA), sizeof PKTR(SEND_KB_GENERAL_DATA));
 
-    printf("replay data: 0x%02x\n", r.data);
+    printf("replay data: 0x%02x\n", PKTR(SEND_KB_GENERAL_DATA).data);
     return 0;
 }
 
@@ -258,56 +263,47 @@ int send_key_up(char *key, int fd)
     return send_key_mod(key, CTRL_KEY_NONE, 0, fd);
 }
 
-static void print_send_ms_rel_pkt(struct cmd_send_ms_rel *pkt)
-{
-    int i;
-    unsigned char *p = (unsigned char*)pkt;
-
-    for (i = 0; i < sizeof *pkt; i++) {
-        printf("0x%02X ", *p++);
-    }
-    printf("\n");
-}
-
-static void gen_cmd_send_ms_btn(int motion, int x, int y, enum MOUSE_BTN button, struct cmd_send_ms_rel *pkt)
+static void gen_cmd_send_ms_btn(int motion, int x, int y, enum MOUSE_BTN button, void *pkt)
 {
     unsigned long cksum = 0;
     int i;
     unsigned char *p = (unsigned char*)pkt;
+    DECLARE_CMD_PTR(SEND_MS_REL_DATA);
 
-    pkt->head = 0xAB57;
-    pkt->addr = 0x0;
-    pkt->cmd = 0x05;
-    pkt->len = 0x5;
-    pkt->data[0] = 0x01;
-    pkt->data[1] = button;
+    PKTP(SEND_MS_REL_DATA) = pkt;
+    PKTP(SEND_MS_REL_DATA)->head = PROTO_HEAD;
+    PKTP(SEND_MS_REL_DATA)->addr = 0x0;
+    PKTP(SEND_MS_REL_DATA)->cmd = CMD_SEND_MS_REL_DATA;
+    PKTP(SEND_MS_REL_DATA)->len = SEND_MS_REL_DATA_LEN;
+    PKTP(SEND_MS_REL_DATA)->data[0] = 0x01;
+    PKTP(SEND_MS_REL_DATA)->data[1] = button;
 
     if (button != MID_BUTTON) {
         /* mouse move */
         if (motion) {
-            pkt->data[2] = x & 0xff;
-            pkt->data[3] = y & 0xff;
+            PKTP(SEND_MS_REL_DATA)->data[2] = x & 0xff;
+            PKTP(SEND_MS_REL_DATA)->data[3] = y & 0xff;
         } else {
-            pkt->data[2] = 0x0;
-            pkt->data[3] = 0x0;
+            PKTP(SEND_MS_REL_DATA)->data[2] = 0x0;
+            PKTP(SEND_MS_REL_DATA)->data[3] = 0x0;
         }
-        pkt->data[4] = 0x0;
+        PKTP(SEND_MS_REL_DATA)->data[4] = 0x0;
     } else {    // use x only for mouse wheel scroll !
-        pkt->data[2] = 0x0;
-        pkt->data[3] = 0x0;
-        pkt->data[4] = x & 0xff;
+        PKTP(SEND_MS_REL_DATA)->data[2] = 0x0;
+        PKTP(SEND_MS_REL_DATA)->data[3] = 0x0;
+        PKTP(SEND_MS_REL_DATA)->data[4] = x & 0xff;
     }
 
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 5 + SEND_MS_REL_DATA_LEN; i++) {
         cksum += *p;
         p++;
     }
 
-    pkt->sum = cksum & 0xff;
+    PKTP(SEND_MS_REL_DATA)->sum = cksum & 0xff;
 
 }
 
-void gen_cmd_send_ms_move_btn(int x, int y, enum MOUSE_BTN button, struct cmd_send_ms_rel *pkt)
+void gen_cmd_send_ms_move_btn(int x, int y, enum MOUSE_BTN button, void *pkt)
 {
     char mx, my;
 
@@ -326,41 +322,45 @@ void gen_cmd_send_ms_move_btn(int x, int y, enum MOUSE_BTN button, struct cmd_se
     gen_cmd_send_ms_btn(1, mx, my, button, pkt);
 }
 
-void gen_cmd_send_ms_click_btn(int x, int y, enum MOUSE_BTN button, struct cmd_send_ms_rel *pkt)
+void gen_cmd_send_ms_click_btn(int x, int y, enum MOUSE_BTN button, void *pkt)
 {
     gen_cmd_send_ms_btn(0, x, y, button, pkt);
 }
 
 int send_mouse_click_down(int fd)
 {
-    struct cmd_send_ms_rel pkt;
-    struct cmd_general_reply r;
+    DECLARE_CMD(SEND_MS_REL_DATA);
+    DECLARE_CMD_REPLY(SEND_MS_REL_DATA);
     int ret;
 
-    gen_cmd_send_ms_click_btn(0, 0, LEFT_BUTTON, &pkt);
-    serial_write_and_wait_reply(fd, &pkt, sizeof pkt, &r, sizeof r);
+    gen_cmd_send_ms_click_btn(0, 0, LEFT_BUTTON, &PKT(SEND_MS_REL_DATA));
+    serial_write_and_wait_reply(fd, &PKT(SEND_MS_REL_DATA), sizeof PKT(SEND_MS_REL_DATA),
+        &PKTR(SEND_MS_REL_DATA), sizeof PKTR(SEND_MS_REL_DATA));
     return 0;
 }
 
 int send_mouse_click_up(int fd)
 {
-    struct cmd_send_ms_rel pkt;
-    struct cmd_general_reply r;
+    DECLARE_CMD(SEND_MS_REL_DATA);
+    DECLARE_CMD_REPLY(SEND_MS_REL_DATA);
     int ret;
 
-    gen_cmd_send_ms_click_btn(0, 0, MOUSE_BTN_NONE, &pkt);
-    serial_write_and_wait_reply(fd, &pkt, sizeof pkt, &r, sizeof r);
+    gen_cmd_send_ms_click_btn(0, 0, MOUSE_BTN_NONE, &PKT(SEND_MS_REL_DATA));
+    serial_write_and_wait_reply(fd, &PKT(SEND_MS_REL_DATA), sizeof PKT(SEND_MS_REL_DATA),
+        &PKTR(SEND_MS_REL_DATA), sizeof PKTR(SEND_MS_REL_DATA));
     return 0;
 }
 
 int send_mouse_move(int fd, int x, int y)
 {
-    struct cmd_send_ms_rel pkt;
-    struct cmd_general_reply r;
+    DECLARE_CMD(SEND_MS_REL_DATA);
+    DECLARE_CMD_REPLY(SEND_MS_REL_DATA);
     int ret;
 
-    gen_cmd_send_ms_move_btn(x, y, MOUSE_BTN_NONE, &pkt);
-    serial_write_and_wait_reply(fd, &pkt, sizeof pkt, &r, sizeof r);
+    gen_cmd_send_ms_move_btn(x, y, MOUSE_BTN_NONE, &PKT(SEND_MS_REL_DATA));
+    //print_pkt(SEND_MS_REL_DATA);
+    serial_write_and_wait_reply(fd, &PKT(SEND_MS_REL_DATA), sizeof PKT(SEND_MS_REL_DATA),
+        &PKTR(SEND_MS_REL_DATA), sizeof PKTR(SEND_MS_REL_DATA));
 
     return 0;
 }
@@ -417,19 +417,25 @@ int set_term_attr(int fd, int speed)
 
 int get_conn_info(int fd)
 {
-    unsigned char pkt[] = { 0x57, 0xAB, 0x00, 0x01, 0x00, 0x03 };
+    DECLARE_CMD(GET_INFO);
+    DECLARE_CMD_REPLY(GET_INFO);
     int ret;
-    struct cmd_get_info_reply r;
 
-    serial_write_and_wait_reply(fd, &pkt, sizeof pkt, &r, sizeof r);
+    PKT(GET_INFO).head = PROTO_HEAD;
+    PKT(GET_INFO).addr = 0x00;
+    PKT(GET_INFO).cmd = CMD_GET_INFO;
+    PKT(GET_INFO).len = GET_INFO_LEN;
+    PKT(GET_INFO).sum = 0x03;
+
+    serial_write_and_wait_reply(fd, &PKT(GET_INFO), sizeof PKT(GET_INFO), &PKTR(GET_INFO), sizeof PKTR(GET_INFO));
     printf("CMD_GET_INFO results:\n");
-    printf("chip version: 0x%02x\n", r.data[0]);
-    printf("usb status: %s\n", (r.data[1] & USB_REC_OK) ? "OK" : "Error");
-    printf("Number Lock: %s\n", (r.data[2] & NUM_LOCK_ON) ? "ON" : "OFF");
-    printf("Caps Lock: %s\n", (r.data[2] & CAPS_LOCK_ON) ? "ON" : "OFF");
-    printf("Scroll Lock: %s\n", (r.data[2] & SCROLL_LOCK_ON) ? "ON" : "OFF");
+    printf("chip version: 0x%02x\n", PKTR(GET_INFO).data[0]);
+    printf("usb status: %s\n", (PKTR(GET_INFO).data[1] & USB_REC_OK) ? "OK" : "Error");
+    printf("Number Lock: %s\n", (PKTR(GET_INFO).data[2] & NUM_LOCK_ON) ? "ON" : "OFF");
+    printf("Caps Lock: %s\n", (PKTR(GET_INFO).data[2] & CAPS_LOCK_ON) ? "ON" : "OFF");
+    printf("Scroll Lock: %s\n", (PKTR(GET_INFO).data[2] & SCROLL_LOCK_ON) ? "ON" : "OFF");
 
-    if (!(r.data[1] & USB_REC_OK)) {
+    if (!(PKTR(GET_INFO).data[1] & USB_REC_OK)) {
         printf("USB connect not ready, please check!\n");
         return -1;
     }
@@ -439,13 +445,13 @@ int get_conn_info(int fd)
 
 int reset_chip(int fd)
 {
-    unsigned char pkt[] = { 0x57, 0xAB, 0x00, 0x0F, 0x00, 0x11 };
+    DECLARE_CMD(RESET);
+    DECLARE_CMD_REPLY(RESET);
     int ret;
-    struct cmd_general_reply r;
 
-    serial_write_and_wait_reply(fd, &pkt, sizeof pkt, &r, sizeof r);
-    printf("cmd reset cmd: 0x%02x\n", r.cmd);
-    printf("cmd reset execute status: 0x%02x\n", r.data);
+    serial_write_and_wait_reply(fd, &PKT(RESET), sizeof PKT(RESET), &PKTR(RESET), sizeof PKTR(RESET));
+    printf("cmd reset cmd: 0x%02x\n", PKTR(RESET).cmd);
+    printf("cmd reset execute status: 0x%02x\n", PKTR(RESET).data);
 }
 
 int main()
