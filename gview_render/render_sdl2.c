@@ -393,7 +393,7 @@ void render_sdl2_dispatch_events()
                 if (mod) {
                     send_key_mod(key, (enum CTRL_KEY)mod, 1, serial_fd);
                 } else {
-                    fprintf(stderr, "keymod [%s] not supported, ignore!\n",
+                    fprintf(stderr, "keymod [%d] not supported, ignore!\n",
                         event.key.keysym.mod);
                     send_key_down(key, serial_fd);
                 }
