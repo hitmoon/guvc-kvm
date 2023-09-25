@@ -493,7 +493,11 @@ int main()
     ret = send_mouse_click_up(fd);
 
     for (int i = 0; i < 10; i++) {
-        send_mouse_move(fd, 5, 4);
+        send_mouse_move(fd, -5, 0);
+    }
+
+    for (int i = 0; i < 10; i++) {
+        send_mouse_move(fd, 0, -4);
     }
 
     for (int i = 0; i < 10; i++) {
