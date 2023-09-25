@@ -308,6 +308,9 @@ static int video_init(int width, int height, int flags, int win_w, int win_h)
             (gpointer)(RIGHT_CTRL | RIGHT_SHIFT));
     }
 
+    /* hide window cursor */
+    SDL_ShowCursor(SDL_DISABLE);
+
 	return 0;
  }
 
