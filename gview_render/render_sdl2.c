@@ -352,34 +352,36 @@ void render_sdl2_dispatch_events()
 		if (event.type == SDL_KEYDOWN)
 		{
             const char *key = SDL_GetKeyName(event.key.keysym.sym);
-            printf("key: |%s| pressed, mod: %d\n", key, event.key.keysym.mod);
+            //printf("key: |%s| pressed, mod: %d\n", key, event.key.keysym.mod);
             send_key_down(key, serial_fd);
 		}
 
         if (event.type == SDL_KEYUP)
         {
             const char *key = SDL_GetKeyName(event.key.keysym.sym);
-            printf("key: %s released\n", key);
+            //printf("key: %s released\n", key);
             send_key_up(key, serial_fd);
         }
 
         if (event.type == SDL_MOUSEMOTION)
         {
+            /*
             printf("mouse move: [%d, %d / %d, %d]\n", event.motion.x, event.motion.y,
                    event.motion.xrel, event.motion.yrel);
+            */
             send_mouse_move_abs(serial_fd, win_height, win_width, event.motion.x, event.motion.y);
             send_mouse_move(serial_fd, event.motion.xrel, event.motion.yrel);
         }
 
         if (event.type == SDL_MOUSEBUTTONDOWN)
         {
-            printf("mouse %d down: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
+            //printf("mouse %d down: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
             send_mouse_click_down(serial_fd);
         }
 
         if (event.type == SDL_MOUSEBUTTONUP)
         {
-            printf("mouse %d up: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
+            //printf("mouse %d up: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
             send_mouse_click_up(serial_fd);
         }
 
