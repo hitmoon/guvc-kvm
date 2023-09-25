@@ -32,6 +32,7 @@
 #include "render.h"
 #include "render_sdl2.h"
 #include "../config.h"
+#include "ch9329.h"
 
 extern int render_verbosity;
 
@@ -40,6 +41,8 @@ SDL_DisplayMode display_mode;
 static SDL_Window*  sdl_window = NULL;
 static SDL_Texture* rending_texture = NULL;
 static SDL_Renderer*  main_renderer = NULL;
+
+static int serial_fd = -1;
 
 /*
  * initialize sdl video
@@ -265,6 +268,12 @@ static int video_init(int width, int height, int flags, int win_w, int win_h)
 
 	assert(rending_texture != NULL);
 
+    serial_fd = ch9329_init();
+    if (serial_fd < 0) {
+        fprintf(stderr, "RENDER: can not initialize ch9329 serial\n");
+        return -1;
+    }
+
 	return 0;
  }
 
@@ -337,29 +346,35 @@ void render_sdl2_dispatch_events()
 	{
 		if (event.type == SDL_KEYDOWN)
 		{
-            printf("key: %s pressed, mod: %d\n",
-                    SDL_GetKeyName(event.key.keysym.sym), event.key.keysym.mod);
+            const char *key = SDL_GetKeyName(event.key.keysym.sym);
+            printf("key: |%s| pressed, mod: %d\n", key, event.key.keysym.mod);
+            send_key_down(key, serial_fd);
 		}
 
         if (event.type == SDL_KEYUP)
         {
-            printf("key: %s released\n",
-                    SDL_GetKeyName(event.key.keysym.sym));
+            const char *key = SDL_GetKeyName(event.key.keysym.sym);
+            printf("key: %s released\n", key);
+            send_key_up(key, serial_fd);
         }
 
         if (event.type == SDL_MOUSEMOTION)
         {
-            printf("mouse move: [%d, %d]\n", event.motion.x, event.motion.y);
+            printf("mouse move: [%d, %d / %d, %d]\n", event.motion.x, event.motion.y,
+                   event.motion.xrel, event.motion.yrel);
+            send_mouse_move(serial_fd, event.motion.xrel, event.motion.yrel);
         }
 
         if (event.type == SDL_MOUSEBUTTONDOWN)
         {
             printf("mouse %d down: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
+            send_mouse_click_down(serial_fd);
         }
 
         if (event.type == SDL_MOUSEBUTTONUP)
         {
             printf("mouse %d up: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
+            send_mouse_click_up(serial_fd);
         }
 
         if (event.type == SDL_MOUSEWHEEL)

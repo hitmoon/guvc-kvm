@@ -10,7 +10,8 @@ guvcview_SOURCES = guvcview.c \
 				   core_io.c \
 				   options.c \
 				   config.c \
-				   gui.c
+				   gui.c \
+				   ../ch9329/ch9329.c
 
 if HAVE_GTK3
 guvcview_SOURCES += gui_gtk3.c \
@@ -46,6 +47,7 @@ guvcview_CFLAGS = $(PTHREAD_CFLAGS) \
 		  -I$(top_srcdir)/gview_render \
 		  -I$(top_srcdir)/gview_audio \
 		  -I$(top_srcdir)/gview_encoder
+		  -I$(top_srcdir)/ch9329
 
 if HAVE_GTK3
 guvcview_CFLAGS += $(GUIGTK3_CFLAGS)
