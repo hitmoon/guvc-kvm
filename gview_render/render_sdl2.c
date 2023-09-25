@@ -370,7 +370,6 @@ void render_sdl2_dispatch_events()
                    event.motion.xrel, event.motion.yrel);
             */
             send_mouse_move_abs(serial_fd, win_height, win_width, event.motion.x, event.motion.y);
-            send_mouse_move(serial_fd, event.motion.xrel, event.motion.yrel);
         }
 
         if (event.type == SDL_MOUSEBUTTONDOWN)
