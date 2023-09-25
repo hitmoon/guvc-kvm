@@ -187,3 +187,5 @@ int send_key_up(char *key, int fd);
 int send_mouse_click_down(int fd);
 int send_mouse_click_up(int fd);
 int send_mouse_move(int fd, int x, int y);
+
+int ch9329_init(void);

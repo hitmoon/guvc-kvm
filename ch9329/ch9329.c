@@ -454,6 +454,38 @@ int reset_chip(int fd)
     printf("cmd reset execute status: 0x%02x\n", PKTR(RESET).data);
 }
 
+int ch9329_init(void)
+{
+    int i, fd;
+    int ret;
+    map = g_hash_table_new(g_str_hash, g_str_equal);
+
+    for (i = 0; i < sizeof ch9329_maps  / sizeof(struct key_map); i++) {
+        g_hash_table_insert(map, ch9329_maps[i].key, (gpointer)ch9329_maps[i].code);
+    }
+
+    fd = open(PORT, O_RDWR | O_NOCTTY | O_SYNC);
+    if (fd < 0) {
+        printf("can not open %s: %s\n", PORT, strerror(errno));
+        return -1;
+    }
+
+    if (set_term_attr(fd, B9600) < 0) {
+        printf("set term attributes error\n");
+        return -1;
+    }
+
+    //reset_chip(fd);
+    ret = get_conn_info(fd);
+
+    if (ret != 0) {
+        return -1;
+    }
+
+    return fd;
+}
+
+#if 0
 int main()
 {
     int i;
@@ -517,3 +549,4 @@ int main()
     close(fd);
     return 0;
 }
+#endif
