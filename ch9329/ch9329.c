@@ -359,15 +359,15 @@ void gen_cmd_send_ms_move_btn(int x, int y, enum MOUSE_BTN button, void *pkt)
     char mx, my;
 
     if (x < 0) { // move left
-        char off = 0 - x;
-        mx = (0x80 - off) | 0x80;
+        char off = - x;
+        mx = (0x0 - off);
     } else {     // move rigth
         mx = x & 0x7f;
     }
 
     if (y < 0) { // move up
-        char off = 0 - y;
-        my = (0x80 - off) | 0x80;
+        char off = - y;
+        my = (0x0 - off);
     } else {     // move down
         my = y & 0x7f;
     }
