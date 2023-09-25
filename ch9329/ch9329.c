@@ -303,6 +303,57 @@ static void gen_cmd_send_ms_btn(int motion, int x, int y, enum MOUSE_BTN button,
 
 }
 
+static void gen_cmd_send_ms_abs_btn(int motion, int h, int w, int x, int y, enum MOUSE_BTN button, void *pkt)
+{
+    unsigned long cksum = 0;
+    int i;
+    unsigned char *p = (unsigned char*)pkt;
+    DECLARE_CMD_PTR(SEND_MS_ABS_DATA);
+
+    PKTP(SEND_MS_ABS_DATA) = pkt;
+    PKTP(SEND_MS_ABS_DATA)->head = PROTO_HEAD;
+    PKTP(SEND_MS_ABS_DATA)->addr = 0x0;
+    PKTP(SEND_MS_ABS_DATA)->cmd = CMD_SEND_MS_ABS_DATA;
+    PKTP(SEND_MS_ABS_DATA)->len = SEND_MS_ABS_DATA_LEN;
+    PKTP(SEND_MS_ABS_DATA)->data[0] = 0x02;
+    PKTP(SEND_MS_ABS_DATA)->data[1] = button;
+
+
+    /* transform abs position */
+    x = (4096 * x) / w;
+    y = (4096 * y) / h;
+
+    if (button != MID_BUTTON) {
+        /* mouse move */
+        if (motion) {
+            PKTP(SEND_MS_ABS_DATA)->data[2] = x & 0xff;
+            PKTP(SEND_MS_ABS_DATA)->data[3] = (x >> 8) & 0xff;
+            PKTP(SEND_MS_ABS_DATA)->data[4] = y & 0xff;
+            PKTP(SEND_MS_ABS_DATA)->data[5] = (y >> 8) & 0xff;
+        } else {
+            PKTP(SEND_MS_ABS_DATA)->data[2] = 0x0;
+            PKTP(SEND_MS_ABS_DATA)->data[3] = 0x0;
+            PKTP(SEND_MS_ABS_DATA)->data[4] = 0x0;
+            PKTP(SEND_MS_ABS_DATA)->data[5] = 0x0;
+        }
+        PKTP(SEND_MS_ABS_DATA)->data[6] = 0x0;
+    } else {    // use x only for mouse wheel scroll !
+        PKTP(SEND_MS_ABS_DATA)->data[2] = 0x0;
+        PKTP(SEND_MS_ABS_DATA)->data[3] = 0x0;
+        PKTP(SEND_MS_ABS_DATA)->data[4] = 0x0;
+        PKTP(SEND_MS_ABS_DATA)->data[5] = 0x0;
+        PKTP(SEND_MS_ABS_DATA)->data[6] = x & 0xff;
+    }
+
+    for (i = 0; i < 5 + SEND_MS_ABS_DATA_LEN; i++) {
+        cksum += *p;
+        p++;
+    }
+
+    PKTP(SEND_MS_ABS_DATA)->sum = cksum & 0xff;
+
+}
+
 void gen_cmd_send_ms_move_btn(int x, int y, enum MOUSE_BTN button, void *pkt)
 {
     char mx, my;
@@ -361,6 +412,19 @@ int send_mouse_move(int fd, int x, int y)
     //print_pkt(SEND_MS_REL_DATA);
     serial_write_and_wait_reply(fd, &PKT(SEND_MS_REL_DATA), sizeof PKT(SEND_MS_REL_DATA),
         &PKTR(SEND_MS_REL_DATA), sizeof PKTR(SEND_MS_REL_DATA));
+
+    return 0;
+}
+
+int send_mouse_move_abs(int fd, int h, int w, int x, int y)
+{
+    DECLARE_CMD(SEND_MS_ABS_DATA);
+    DECLARE_CMD_REPLY(SEND_MS_ABS_DATA);
+    int ret;
+
+    gen_cmd_send_ms_abs_btn(1, h, w, x, y, MOUSE_BTN_NONE, &PKT(SEND_MS_ABS_DATA));
+    serial_write_and_wait_reply(fd, &PKT(SEND_MS_ABS_DATA), sizeof PKT(SEND_MS_ABS_DATA),
+        &PKTR(SEND_MS_ABS_DATA), sizeof PKTR(SEND_MS_ABS_DATA));
 
     return 0;
 }
@@ -452,6 +516,7 @@ int reset_chip(int fd)
     serial_write_and_wait_reply(fd, &PKT(RESET), sizeof PKT(RESET), &PKTR(RESET), sizeof PKTR(RESET));
     printf("cmd reset cmd: 0x%02x\n", PKTR(RESET).cmd);
     printf("cmd reset execute status: 0x%02x\n", PKTR(RESET).data);
+    return 0;
 }
 
 int ch9329_init(void)

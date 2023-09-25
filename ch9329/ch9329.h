@@ -97,11 +97,13 @@ TYPE_CMD(GET_INFO);
 TYPE_CMD(RESET);
 TYPE_CMD(SEND_KB_GENERAL_DATA);
 TYPE_CMD(SEND_MS_REL_DATA);
+TYPE_CMD(SEND_MS_ABS_DATA);
 
 TYPE_CMD_REPLY(GET_INFO);
 TYPE_CMD_REPLY(RESET);
 TYPE_CMD_REPLY(SEND_KB_GENERAL_DATA);
 TYPE_CMD_REPLY(SEND_MS_REL_DATA);
+TYPE_CMD_REPLY(SEND_MS_ABS_DATA);
 
 struct cmd_send_kb {
     unsigned short head;
@@ -187,5 +189,6 @@ int send_key_up(char *key, int fd);
 int send_mouse_click_down(int fd);
 int send_mouse_click_up(int fd);
 int send_mouse_move(int fd, int x, int y);
+int send_mouse_move_abs(int fd, int h, int w, int x, int y);
 
 int ch9329_init(void);
