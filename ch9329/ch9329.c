@@ -249,7 +249,7 @@ static int send_key_mod(char *key, enum CTRL_KEY mod, int pressed, int fd)
     serial_write_and_wait_reply(fd, &PKT(SEND_KB_GENERAL_DATA), sizeof PKT(SEND_KB_GENERAL_DATA),
         &PKTR(SEND_KB_GENERAL_DATA), sizeof PKTR(SEND_KB_GENERAL_DATA));
 
-    printf("replay data: 0x%02x\n", PKTR(SEND_KB_GENERAL_DATA).data);
+    printf("reply data: 0x%02x\n", PKTR(SEND_KB_GENERAL_DATA).data[0]);
     return 0;
 }
 
@@ -515,7 +515,7 @@ int reset_chip(int fd)
 
     serial_write_and_wait_reply(fd, &PKT(RESET), sizeof PKT(RESET), &PKTR(RESET), sizeof PKTR(RESET));
     printf("cmd reset cmd: 0x%02x\n", PKTR(RESET).cmd);
-    printf("cmd reset execute status: 0x%02x\n", PKTR(RESET).data);
+    printf("cmd reset execute status: 0x%02x\n", PKTR(RESET).data[0]);
     return 0;
 }
 
