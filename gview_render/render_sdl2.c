@@ -44,6 +44,8 @@ static SDL_Renderer*  main_renderer = NULL;
 
 static int serial_fd = -1;
 
+int win_width, win_height;
+
 /*
  * initialize sdl video
  * args:
@@ -196,6 +198,7 @@ static int video_init(int width, int height, int flags, int win_w, int win_h)
 		}
 	}
 
+
 	if(render_verbosity > 2)
     {
 		/* Allocate a renderer info struct*/
@@ -222,6 +225,8 @@ static int video_init(int width, int height, int flags, int win_w, int win_h)
 	}
 
 	SDL_RenderSetLogicalSize(main_renderer, width, height);
+    win_width = width;
+    win_height = height;
 	SDL_SetRenderDrawBlendMode(main_renderer, SDL_BLENDMODE_NONE);
 
     rending_texture = SDL_CreateTexture(main_renderer,
@@ -362,6 +367,7 @@ void render_sdl2_dispatch_events()
         {
             printf("mouse move: [%d, %d / %d, %d]\n", event.motion.x, event.motion.y,
                    event.motion.xrel, event.motion.yrel);
+            send_mouse_move_abs(serial_fd, win_height, win_width, event.motion.x, event.motion.y);
             send_mouse_move(serial_fd, event.motion.xrel, event.motion.yrel);
         }
 
