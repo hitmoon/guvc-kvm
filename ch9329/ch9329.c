@@ -128,7 +128,7 @@ ssize_t serial_read(int fd, char *buf, size_t size);
             return -1; \
         } \
         \
-        delay = csize / 1.2; \
+        delay = (double)csize / 1.2; \
         usleep(delay * 1000); \
         \
         memset(reply, 0, rsize); \
