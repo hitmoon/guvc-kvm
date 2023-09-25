@@ -33,6 +33,7 @@
 #include "render_sdl2.h"
 #include "../config.h"
 #include "ch9329.h"
+#include <glib.h>
 
 extern int render_verbosity;
 
@@ -46,6 +47,7 @@ static int serial_fd = -1;
 
 int win_width, win_height;
 
+GHashTable *key_mod_map = NULL;
 /*
  * initialize sdl video
  * args:
@@ -273,10 +275,37 @@ static int video_init(int width, int height, int flags, int win_w, int win_h)
 
 	assert(rending_texture != NULL);
 
-    serial_fd = ch9329_init();
-    if (serial_fd < 0) {
-        fprintf(stderr, "RENDER: can not initialize ch9329 serial\n");
-        return -1;
+    if (serial_fd == -1) {
+        serial_fd = ch9329_init();
+        if (serial_fd < 0) {
+            fprintf(stderr, "RENDER: can not initialize ch9329 serial\n");
+            return -1;
+        }
+    }
+
+    if (key_mod_map == NULL) {
+        key_mod_map = g_hash_table_new(NULL, NULL);
+        g_hash_table_insert(key_mod_map, (gpointer)KMOD_LSHIFT, (gpointer)LEFT_SHIFT);
+        g_hash_table_insert(key_mod_map, (gpointer)KMOD_RSHIFT, (gpointer)RIGHT_SHIFT);
+        g_hash_table_insert(key_mod_map, (gpointer)KMOD_LCTRL, (gpointer)LEFT_CTRL);
+        g_hash_table_insert(key_mod_map, (gpointer)KMOD_RCTRL, (gpointer)RIGHT_CTRL);
+        g_hash_table_insert(key_mod_map, (gpointer)KMOD_LALT, (gpointer)LEFT_ALT);
+        g_hash_table_insert(key_mod_map, (gpointer)KMOD_RALT, (gpointer)RIGHT_ALT);
+        g_hash_table_insert(key_mod_map, (gpointer)KMOD_LGUI, (gpointer)LEFT_WIN);
+        g_hash_table_insert(key_mod_map, (gpointer)KMOD_RGUI, (gpointer)RIGHT_WIN);
+
+        /* left ctrl + left alt */
+        g_hash_table_insert(key_mod_map, (gpointer)(KMOD_LCTRL | KMOD_LALT),
+            (gpointer)(LEFT_CTRL | LEFT_ALT));
+        /* left ctrl + left shift */
+        g_hash_table_insert(key_mod_map, (gpointer)(KMOD_LCTRL | KMOD_LSHIFT),
+            (gpointer)(LEFT_CTRL | LEFT_SHIFT));
+        /* right ctrl + right alt */
+        g_hash_table_insert(key_mod_map, (gpointer)(KMOD_RCTRL | KMOD_RALT),
+            (gpointer)(RIGHT_CTRL | RIGHT_ALT));
+        /* right ctrl + right shift */
+        g_hash_table_insert(key_mod_map, (gpointer)(KMOD_RCTRL | KMOD_RSHIFT),
+            (gpointer)(RIGHT_CTRL | RIGHT_SHIFT));
     }
 
 	return 0;
@@ -353,7 +382,19 @@ void render_sdl2_dispatch_events()
 		{
             const char *key = SDL_GetKeyName(event.key.keysym.sym);
             //printf("key: |%s| pressed, mod: %d\n", key, event.key.keysym.mod);
-            send_key_down(key, serial_fd);
+            if (event.key.keysym.mod ==  KMOD_NONE) {
+                send_key_down(key, serial_fd);
+            } else {
+                gpointer mod = g_hash_table_lookup(key_mod_map, (gconstpointer)event.key.keysym.mod);
+
+                if (mod) {
+                    send_key_mod(key, (enum CTRL_KEY)mod, 1, serial_fd);
+                } else {
+                    fprintf(stderr, "keymod [%s] not supported, ignore!\n",
+                        event.key.keysym.mod);
+                    send_key_down(key, serial_fd);
+                }
+            }
 		}
 
         if (event.type == SDL_KEYUP)

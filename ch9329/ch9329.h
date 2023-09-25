@@ -184,6 +184,7 @@ int reset_chip(int fd);
 unsigned char lookup_key_code(char *key);
 int send_key_down(char *key, int fd);
 int send_key_up(char *key, int fd);
+int send_key_mod(char *key, enum CTRL_KEY mod, int pressed, int fd);
 
 /* Mouse */
 int send_mouse_click_down(int fd);

@@ -237,7 +237,7 @@ ssize_t serial_read(int fd, char *buf, size_t size)
     return size;
 }
 
-static int send_key_mod(char *key, enum CTRL_KEY mod, int pressed, int fd)
+int send_key_mod(char *key, enum CTRL_KEY mod, int pressed, int fd)
 {
     DECLARE_CMD(SEND_KB_GENERAL_DATA);
     DECLARE_CMD_REPLY(SEND_KB_GENERAL_DATA);
