@@ -104,42 +104,6 @@ TYPE_CMD_REPLY(RESET);
 TYPE_CMD_REPLY(SEND_KB_GENERAL_DATA);
 TYPE_CMD_REPLY(SEND_MS_REL_DATA);
 TYPE_CMD_REPLY(SEND_MS_ABS_DATA);
-
-struct cmd_send_kb {
-    unsigned short head;
-    unsigned char addr;
-    unsigned char cmd;
-    unsigned char len;
-    unsigned char data[8];
-    unsigned char sum;
-};
-
-struct cmd_send_ms_rel {
-    unsigned short head;
-    unsigned char addr;
-    unsigned char cmd;
-    unsigned char len;
-    unsigned char data[5];
-    unsigned char sum;
-};
-
-struct cmd_general_reply {
-    unsigned short head;
-    unsigned char addr;
-    unsigned char cmd;
-    unsigned char len;
-    unsigned char data;
-    unsigned char sum;
-};
-
-struct cmd_get_info_reply {
-    unsigned short head;
-    unsigned char addr;
-    unsigned char cmd;
-    unsigned char len;
-    unsigned char data[8];
-    unsigned char sum;
-};
 #pragma pack()
 
 
