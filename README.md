@@ -15,6 +15,9 @@
 - CH9329(大头) 插入A，另一端插入B
 - 远程访问电脑B(Linux + vnc), 打开guvc-kvm, 就可以操纵内网的电脑A了
 
+### 使用截图
+![image](https://github.com/hitmoon/guvc-kvm/blob/kvm/guvc-kvm-1.png)
+
 ### 编译安装
 参照下面的文档即可
 
