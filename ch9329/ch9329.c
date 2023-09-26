@@ -241,7 +241,6 @@ int send_key_mod(char *key, enum CTRL_KEY mod, int pressed, int fd)
 {
     DECLARE_CMD(SEND_KB_GENERAL_DATA);
     DECLARE_CMD_REPLY(SEND_KB_GENERAL_DATA);
-    int ret;
 
     gen_cmd_send_kb(key, mod, pressed, &PKT(SEND_KB_GENERAL_DATA));
     //printf("send %s %s\n", key, pressed ? "pressed" : "released");
@@ -384,7 +383,6 @@ int send_mouse_click_down(int fd, int x, int y, enum MOUSE_BTN button)
 {
     DECLARE_CMD(SEND_MS_REL_DATA);
     DECLARE_CMD_REPLY(SEND_MS_REL_DATA);
-    int ret;
 
     gen_cmd_send_ms_click_btn(x, y, button, &PKT(SEND_MS_REL_DATA));
     serial_write_and_wait_reply(fd, &PKT(SEND_MS_REL_DATA), sizeof PKT(SEND_MS_REL_DATA),
@@ -396,7 +394,6 @@ int send_mouse_click_up(int fd, int x, int y)
 {
     DECLARE_CMD(SEND_MS_REL_DATA);
     DECLARE_CMD_REPLY(SEND_MS_REL_DATA);
-    int ret;
 
     gen_cmd_send_ms_click_btn(x, y, MOUSE_BTN_NONE, &PKT(SEND_MS_REL_DATA));
     serial_write_and_wait_reply(fd, &PKT(SEND_MS_REL_DATA), sizeof PKT(SEND_MS_REL_DATA),
@@ -408,7 +405,6 @@ int send_mouse_move(int fd, int x, int y)
 {
     DECLARE_CMD(SEND_MS_REL_DATA);
     DECLARE_CMD_REPLY(SEND_MS_REL_DATA);
-    int ret;
 
     gen_cmd_send_ms_move_btn(x, y, MOUSE_BTN_NONE, &PKT(SEND_MS_REL_DATA));
     //print_pkt(SEND_MS_REL_DATA);
@@ -422,7 +418,6 @@ int send_mouse_move_abs(int fd, int h, int w, int x, int y)
 {
     DECLARE_CMD(SEND_MS_ABS_DATA);
     DECLARE_CMD_REPLY(SEND_MS_ABS_DATA);
-    int ret;
 
     gen_cmd_send_ms_abs_btn(1, h, w, x, y, MOUSE_BTN_NONE, &PKT(SEND_MS_ABS_DATA));
     serial_write_and_wait_reply(fd, &PKT(SEND_MS_ABS_DATA), sizeof PKT(SEND_MS_ABS_DATA),
@@ -485,7 +480,6 @@ int get_conn_info(int fd)
 {
     DECLARE_CMD(GET_INFO);
     DECLARE_CMD_REPLY(GET_INFO);
-    int ret;
 
     PKT(GET_INFO).head = PROTO_HEAD;
     PKT(GET_INFO).addr = 0x00;
@@ -513,7 +507,6 @@ int reset_chip(int fd)
 {
     DECLARE_CMD(RESET);
     DECLARE_CMD_REPLY(RESET);
-    int ret;
 
     serial_write_and_wait_reply(fd, &PKT(RESET), sizeof PKT(RESET), &PKTR(RESET), sizeof PKTR(RESET));
     printf("cmd reset cmd: 0x%02x\n", PKTR(RESET).cmd);
