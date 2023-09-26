@@ -1,3 +1,25 @@
+## guvc-kvm
+### a simple kvm tool for linux platform based on guvcview
+
+### 实现方式
+**视频:**  MS2130 USB 3.0 HDMI 视频采集卡
+
+**键盘 & 鼠标:** CH9329+CH340 串口转USB HID键鼠线
+
+假设:
+- 被控电脑 A
+- 内网电脑 B
+
+连接方式:
+- 采集卡一端连接 A 的HDMI 输出，另一端连接到 B 的USB 3.0 接口
+- CH9329(大头) 插入A，另一端插入B
+- 远程访问电脑B(Linux + vnc), 打开guvc-kvm, 就可以操纵内网的电脑A了
+
+### 编译安装
+参照下面的文档即可
+
+*************************
+
 GTK UVC VIEWER (guvcview)
 *************************
 
