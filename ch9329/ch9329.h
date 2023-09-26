@@ -138,6 +138,18 @@ enum KBD_LOCK_INFO {
     SCROLL_LOCK_ON = 1 << 2
 };
 
+enum USB_STR {
+    USB_VENDOR = 0x00,
+    USB_PRODUCT = 0x01,
+    USB_SERIALNO = 0x02
+};
+
+/* get usb string */
+int get_chip_usb_string(int fd, enum USB_STR spec, char *buf);
+
+/* set usb string */
+int set_chip_usb_string(int fd, enum USB_STR spec, char *buf, size_t size);
+
 /* get info */
 int get_conn_info(int fd);
 

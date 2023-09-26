@@ -514,6 +514,88 @@ int reset_chip(int fd)
     return 0;
 }
 
+int get_chip_usb_string(int fd, enum USB_STR spec, char *buf)
+{
+    unsigned char pkt[7];
+    unsigned char reply[5];
+    unsigned long chksum = 0;
+    int reply_len, len;
+    enum USB_STR type;
+    unsigned char *data;
+
+    pkt[0] = 0x57;
+    pkt[1] = 0xAB;
+    pkt[2] = 0x00;
+    pkt[3] = CMD_GET_USB_STRING;
+    pkt[4] = GET_USB_STRING_LEN;
+    pkt[5] = spec;
+
+    for (int i = 0; i < 6; i++) {
+        chksum += pkt[i];
+    }
+    pkt[6] = chksum & 0xff;
+
+    /* we can first read 5 from reply, then read left bytes */
+    serial_write_and_wait_reply(fd, pkt, 7, reply, 5);
+
+    reply_len = reply[4];
+
+    /* chsum */
+    reply_len += 1;
+    data = (unsigned char *)malloc(reply_len);
+    if (data == NULL) {
+        fprintf(stderr, "malloc error!\n");
+        return -1;
+    }
+
+    if (serial_read(fd, data, reply_len) < 0) {
+        fprintf(stderr, "read usb string error\n");
+        return -1;
+    }
+
+    type = data[0];
+    len = data[1];
+    printf("type: %d, len: %d\n", type, len);
+    memcpy(buf, &data[2], len);
+
+    free(data);
+
+    return len;
+}
+
+int set_chip_usb_string(int fd, enum USB_STR spec, char *buf, size_t size)
+{
+    unsigned char *pkt;
+    unsigned char reply[7];
+    unsigned long chksum = 0;
+    int len = 6 + 2 + size;
+
+    pkt = (unsigned char*)malloc(len);
+    if (pkt == NULL) {
+        fprintf(stderr, "set usb string: malloc error\n");
+        return -1;
+    }
+
+    pkt[0] = 0x57;
+    pkt[1] = 0xAB;
+    pkt[2] = 0x00;
+    pkt[3] = CMD_SET_USB_STRING;
+    pkt[4] = 2 + size;
+    pkt[5] = spec;
+    pkt[6] = size;
+
+    memcpy(&pkt[7], buf, size);
+    for (int i = 0; i < 7 + size; i++) {
+        chksum += pkt[i];
+    }
+
+    pkt[7 + size] = chksum & 0xff;
+    serial_write_and_wait_reply(fd, pkt, len, reply, 7);
+
+    free(pkt);
+    return 0;
+}
+
 int ch9329_init(void)
 {
     int i, fd;
@@ -545,12 +627,23 @@ int ch9329_init(void)
     return fd;
 }
 
+void print_data(char *buf, size_t len)
+{
+    int i;
+    for (i = 0; i < len; i++) {
+        printf("0x%02x ", buf[i]);
+    }
+    printf("\n");
+}
+
 #if 0
 int main()
 {
     int i;
     int fd;
     int ret;
+    char usb_tag[32];
+    int len;
     map = g_hash_table_new(g_str_hash, g_str_equal);
 
     for (i = 0; i < sizeof ch9329_maps  / sizeof(struct key_map); i++) {
@@ -575,36 +668,32 @@ int main()
     //reset_chip(fd);
     get_conn_info(fd);
 
-    ret = send_key_down("A", fd);
-    if (ret < 0) {
-        printf("send_key_down error\n");
-        return 1;
-    }
+    memset(usb_tag, 0, 32);
+    len = get_chip_usb_string(fd, USB_VENDOR, usb_tag);
+    print_data(usb_tag, len);
+    printf("vendor: [%s]\n", usb_tag);
+    memset(usb_tag, 0, 32);
+    len = get_chip_usb_string(fd, USB_PRODUCT, usb_tag);
+    print_data(usb_tag, len);
+    printf("product: [%s]\n", usb_tag);
+    memset(usb_tag, 0, 32);
+    len = get_chip_usb_string(fd, USB_SERIALNO, usb_tag);
+    print_data(usb_tag, len);
+    printf("serial: [%s]\n", usb_tag);
 
-    ret = send_key_up("A", fd);
-    if (ret < 0) {
-        printf("send_key_down error\n");
-        return 1;
-    }
+#if 1
+    memset(usb_tag, 0, 32);
+    sprintf(usb_tag, "CHINA WHC");
+    set_chip_usb_string(fd, USB_VENDOR, usb_tag, 23);
 
-    ret = send_mouse_click_down(fd);
-    ret = send_mouse_click_up(fd);
+    memset(usb_tag, 0, 32);
+    sprintf(usb_tag, "IP-KVM Serial HID V0.1");
+    set_chip_usb_string(fd, USB_PRODUCT, usb_tag, 23);
 
-    for (int i = 0; i < 10; i++) {
-        send_mouse_move(fd, -5, 0);
-    }
-
-    for (int i = 0; i < 10; i++) {
-        send_mouse_move(fd, 0, -4);
-    }
-
-    for (int i = 0; i < 10; i++) {
-        send_mouse_move(fd, 5, 0);
-    }
-
-    for (int i = 0; i < 10; i++) {
-        send_mouse_move(fd, 0, 4);
-    }
+    memset(usb_tag, 0, 32);
+    sprintf(usb_tag, "00000001");
+    set_chip_usb_string(fd, USB_SERIALNO, usb_tag, 23);
+#endif
 
     close(fd);
     return 0;
