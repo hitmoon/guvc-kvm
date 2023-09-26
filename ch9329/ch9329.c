@@ -380,25 +380,25 @@ void gen_cmd_send_ms_click_btn(int x, int y, enum MOUSE_BTN button, void *pkt)
     gen_cmd_send_ms_btn(0, x, y, button, pkt);
 }
 
-int send_mouse_click_down(int fd)
+int send_mouse_click_down(int fd, int x, int y, enum MOUSE_BTN button)
 {
     DECLARE_CMD(SEND_MS_REL_DATA);
     DECLARE_CMD_REPLY(SEND_MS_REL_DATA);
     int ret;
 
-    gen_cmd_send_ms_click_btn(0, 0, LEFT_BUTTON, &PKT(SEND_MS_REL_DATA));
+    gen_cmd_send_ms_click_btn(x, y, button, &PKT(SEND_MS_REL_DATA));
     serial_write_and_wait_reply(fd, &PKT(SEND_MS_REL_DATA), sizeof PKT(SEND_MS_REL_DATA),
         &PKTR(SEND_MS_REL_DATA), sizeof PKTR(SEND_MS_REL_DATA));
     return 0;
 }
 
-int send_mouse_click_up(int fd)
+int send_mouse_click_up(int fd, int x, int y)
 {
     DECLARE_CMD(SEND_MS_REL_DATA);
     DECLARE_CMD_REPLY(SEND_MS_REL_DATA);
     int ret;
 
-    gen_cmd_send_ms_click_btn(0, 0, MOUSE_BTN_NONE, &PKT(SEND_MS_REL_DATA));
+    gen_cmd_send_ms_click_btn(x, y, MOUSE_BTN_NONE, &PKT(SEND_MS_REL_DATA));
     serial_write_and_wait_reply(fd, &PKT(SEND_MS_REL_DATA), sizeof PKT(SEND_MS_REL_DATA),
         &PKTR(SEND_MS_REL_DATA), sizeof PKTR(SEND_MS_REL_DATA));
     return 0;

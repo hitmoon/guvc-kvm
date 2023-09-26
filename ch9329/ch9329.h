@@ -187,8 +187,8 @@ int send_key_up(char *key, int fd);
 int send_key_mod(char *key, enum CTRL_KEY mod, int pressed, int fd);
 
 /* Mouse */
-int send_mouse_click_down(int fd);
-int send_mouse_click_up(int fd);
+int send_mouse_click_down(int fd, int x, int y, enum MOUSE_BTN button);
+int send_mouse_click_up(int fd, int x, int y);
 int send_mouse_move(int fd, int x, int y);
 int send_mouse_move_abs(int fd, int h, int w, int x, int y);
 

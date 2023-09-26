@@ -419,13 +419,21 @@ void render_sdl2_dispatch_events()
         if (event.type == SDL_MOUSEBUTTONDOWN)
         {
             //printf("mouse %d down: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
-            send_mouse_click_down(serial_fd);
+            if (event.button.button == SDL_BUTTON_LEFT) {
+                send_mouse_click_down(serial_fd, event.button.x, event.button.y, LEFT_BUTTON);
+            } else if (event.button.button == SDL_BUTTON_RIGHT) {
+                send_mouse_click_down(serial_fd, event.button.x, event.button.y, RIGHT_BUTTON);
+            } else if (event.button.button == SDL_BUTTON_MIDDLE) {
+                send_mouse_click_down(serial_fd, event.button.x, event.button.y, MID_BUTTON);
+            } else {
+                fprintf(stderr, "mouse button [%d] click not supported\n", event.button.button);
+            }
         }
 
         if (event.type == SDL_MOUSEBUTTONUP)
         {
             //printf("mouse %d up: [%d, %d]\n", event.button.button, event.button.x, event.button.y);
-            send_mouse_click_up(serial_fd);
+            send_mouse_click_up(serial_fd, event.button.x, event.button.y);
         }
 
         if (event.type == SDL_MOUSEWHEEL)
