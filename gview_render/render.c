@@ -381,8 +381,8 @@ int render_frame(uint8_t *frame)
 
 		#if ENABLE_SDL2
 		case RENDER_SDL:
-			ret = render_sdl2_frame(frame, my_width, my_height);
 			render_sdl2_dispatch_events();
+			ret = render_sdl2_frame(frame, my_width, my_height);
 			break;
 		#endif
 
