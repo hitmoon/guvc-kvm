@@ -167,5 +167,6 @@ int send_mouse_click_down(int fd, int x, int y, enum MOUSE_BTN button);
 int send_mouse_click_up(int fd, int x, int y);
 int send_mouse_move(int fd, int x, int y);
 int send_mouse_move_abs(int fd, int h, int w, int x, int y);
+int send_mouse_wheel(int fd, int x, int y);
 
 int ch9329_init(void);

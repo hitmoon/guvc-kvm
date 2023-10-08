@@ -287,10 +287,10 @@ static void gen_cmd_send_ms_btn(int motion, int x, int y, enum MOUSE_BTN button,
             PKTP(SEND_MS_REL_DATA)->data[3] = 0x0;
         }
         PKTP(SEND_MS_REL_DATA)->data[4] = 0x0;
-    } else {    // use x only for mouse wheel scroll !
+    } else {    // use y only for mouse wheel scroll !
         PKTP(SEND_MS_REL_DATA)->data[2] = 0x0;
         PKTP(SEND_MS_REL_DATA)->data[3] = 0x0;
-        PKTP(SEND_MS_REL_DATA)->data[4] = x & 0xff;
+        PKTP(SEND_MS_REL_DATA)->data[4] = y & 0xff;
     }
 
     for (i = 0; i < 5 + SEND_MS_REL_DATA_LEN; i++) {
@@ -374,6 +374,21 @@ void gen_cmd_send_ms_move_btn(int x, int y, enum MOUSE_BTN button, void *pkt)
     gen_cmd_send_ms_btn(1, mx, my, button, pkt);
 }
 
+void gen_cmd_send_ms_wheel(int x, int y, void *pkt)
+{
+    char my;
+
+    /* scroll down */
+    if (y < 0) {
+        char off = -y;
+        my = 0x100 - off;
+    } else {  /* scroll up */
+        my = y & 0x7f;
+    }
+
+    gen_cmd_send_ms_btn(0, 0, my, MID_BUTTON, pkt);
+}
+
 void gen_cmd_send_ms_click_btn(int x, int y, enum MOUSE_BTN button, void *pkt)
 {
     gen_cmd_send_ms_btn(0, x, y, button, pkt);
@@ -422,6 +437,19 @@ int send_mouse_move_abs(int fd, int h, int w, int x, int y)
     gen_cmd_send_ms_abs_btn(1, h, w, x, y, MOUSE_BTN_NONE, &PKT(SEND_MS_ABS_DATA));
     serial_write_and_wait_reply(fd, &PKT(SEND_MS_ABS_DATA), sizeof PKT(SEND_MS_ABS_DATA),
         &PKTR(SEND_MS_ABS_DATA), sizeof PKTR(SEND_MS_ABS_DATA));
+
+    return 0;
+}
+
+int send_mouse_wheel(int fd, int x, int y)
+{
+    DECLARE_CMD(SEND_MS_REL_DATA);
+    DECLARE_CMD_REPLY(SEND_MS_REL_DATA);
+
+    gen_cmd_send_ms_wheel(x, y, &PKT(SEND_MS_REL_DATA));
+
+    serial_write_and_wait_reply(fd, &PKT(SEND_MS_REL_DATA), sizeof PKT(SEND_MS_REL_DATA),
+        &PKTR(SEND_MS_REL_DATA), sizeof PKTR(SEND_MS_REL_DATA));
 
     return 0;
 }
