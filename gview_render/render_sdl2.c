@@ -438,7 +438,8 @@ void render_sdl2_dispatch_events()
 
         if (event.type == SDL_MOUSEWHEEL)
         {
-            printf("mouse wheel: [%d, %d]\n", event.wheel.x, event.wheel.y);
+            //printf("mouse wheel: [%d, %d]\n", event.wheel.x, event.wheel.y);
+            send_mouse_wheel(serial_fd, event.wheel.x, event.wheel.y);
         }
 
 		if(event.type==SDL_QUIT)
